@@ -2,31 +2,31 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITS U-15G 体力測定レポート</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --its-navy: #001529;
             --its-pink: #ff007f;
+            --its-gray: #888;
         }
 
         body { 
-            margin: 0; padding: 0; background-color: #555; 
+            margin: 0; padding: 0; background-color: #f0f2f5; 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
         }
 
-        /* A4サイズを厳格に管理 */
+        /* PC・タブレットでの表示設定 */
         .a4-page {
             width: 210mm;
-            height: 296mm; /* 297mmより1mm短く設定 */
-            margin: 10mm auto;
+            min-height: 296mm;
+            margin: 20px auto;
             background: white;
-            padding: 10mm 15mm; /* 余白を少し削る */
+            padding: 10mm 15mm;
             box-sizing: border-box;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* はみ出しをカット */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
         .header {
@@ -38,12 +38,15 @@
             align-items: flex-end;
         }
 
-        .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; letter-spacing: 1px; }
+        .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; }
         .header-title .sub-title { color: var(--its-pink); font-weight: bold; font-size: 11px; }
 
-        /* 選手情報 */
+        /* 選手情報：スマホでは1列、PCでは3列 */
         .info-grid {
-            display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 15px; margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         .info-item label { 
@@ -52,55 +55,69 @@
         }
 
         .info-item input { 
-            border: 1px solid #ddd; padding: 6px; font-size: 13px; width: 100%; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ddd; padding: 10px; font-size: 16px; /* スマホでズームしないよう16px */
+            width: 100%; box-sizing: border-box; border-radius: 4px;
         }
 
-        /* メインレイアウト */
-        .main-layout { display: flex; flex-direction: column; gap: 10px; }
+        .chart-section { display: flex; justify-content: center; margin-bottom: 20px; }
+        .chart-container { width: 100%; max-width: 340px; aspect-ratio: 1/1; }
+        #chartImage { display: none; width: 100%; max-width: 340px; }
 
-        .chart-section { display: flex; justify-content: center; height: 340px; } /* グラフを少し小さく */
-        .chart-container { width: 340px; height: 340px; }
-        #chartImage { display: none; width: 340px; height: 340px; }
-
-        .table-section h3 { font-size: 14px; color: var(--its-navy); border-bottom: 1px solid var(--its-navy); padding-bottom: 3px; margin: 0 0 10px 0; }
+        .table-section h3 { font-size: 14px; color: var(--its-navy); border-bottom: 1px solid var(--its-navy); padding-bottom: 3px; margin: 10px 0; }
 
         .result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .result-table th { background-color: var(--its-navy); color: white; padding: 6px; border: 1px solid #fff; }
-        .result-table td { padding: 5px; text-align: center; border: 1px solid #eee; }
-        .item-label { text-align: left !important; font-weight: bold; background: #fafafa; padding-left: 10px !important; }
+        .result-table th { background-color: var(--its-navy); color: white; padding: 8px; border: 1px solid #fff; }
+        .result-table td { padding: 8px; text-align: center; border: 1px solid #eee; }
+        .item-label { text-align: left !important; font-weight: bold; background: #fafafa; }
         .current-val { font-weight: bold; background-color: #fff0f6; color: var(--its-pink); }
-        .result-table input { width: 40px; text-align: center; border: 1px solid #ccc; padding: 1px; }
-
-        /* コメント欄 */
-        .comment-section { margin-top: 10px; border: 1.2px solid var(--its-navy); border-radius: 4px; padding: 10px; }
-        .comment-section label { font-size: 11px; font-weight: bold; color: var(--its-pink); display: block; margin-bottom: 5px; }
-        .comment-box { width: 100%; height: 50px; border: none; resize: none; font-size: 13px; outline: none; }
-
-        /* フッター */
-        .footer {
-            position: absolute; bottom: 10mm; left: 15mm; right: 15mm;
-            border-top: 1px solid #eee; padding-top: 5px; display: flex;
-            justify-content: space-between; color: #999; font-size: 9px;
+        
+        /* スマホ用入力欄の拡大 */
+        .result-table input { 
+            width: 100%; max-width: 60px; text-align: center; border: 1px solid #ccc; 
+            padding: 8px 4px; font-size: 14px; border-radius: 4px;
         }
 
-        .no-print-area { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
-        button { padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 50px; border: none; color: white; margin-left: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .comment-section { margin-top: 15px; border: 1.2px solid var(--its-navy); border-radius: 4px; padding: 10px; }
+        .comment-section label { font-size: 11px; font-weight: bold; color: var(--its-pink); display: block; margin-bottom: 5px; }
+        .comment-box { width: 100%; height: 60px; border: none; resize: none; font-size: 14px; outline: none; }
+
+        .footer {
+            margin-top: 20px; border-top: 1px solid #eee; padding-top: 5px; 
+            display: flex; justify-content: space-between; color: #999; font-size: 9px;
+        }
+
+        /* 操作パネル（スマホでも使いやすく） */
+        .no-print-area { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: rgba(255,255,255,0.9); padding: 15px; 
+            display: flex; justify-content: center; gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;
+        }
+        button { 
+            flex: 1; max-width: 150px; padding: 12px; font-weight: bold; cursor: pointer; 
+            border-radius: 8px; border: none; color: white; font-size: 14px;
+        }
         .btn-update { background: var(--its-navy); }
         .btn-print { background: var(--its-pink); }
 
         .print-only { display: none; }
 
+        /* 印刷・PDF用の設定（A4固定） */
         @media print {
-            @page { size: A4 portrait; margin: 0; }
             body { background: white; }
-            .a4-page { margin: 0; box-shadow: none; width: 210mm; height: 297mm; }
+            .a4-page { margin: 0; width: 210mm; height: 297mm; box-shadow: none; padding: 10mm 15mm; }
             .no-print-area, input, textarea { display: none !important; }
             .print-only { display: block !important; }
             #fitnessChart { display: none !important; }
             #chartImage { display: block !important; margin: 0 auto; }
-            .result-table th { background-color: var(--its-navy) !important; -webkit-print-color-adjust: exact; }
-            .current-val { background-color: #fff0f6 !important; -webkit-print-color-adjust: exact; }
-            .comment-box-print { display: block !important; min-height: 50px; white-space: pre-wrap; font-size: 13px; }
+            .footer { position: absolute; bottom: 10mm; left: 15mm; right: 15mm; }
+        }
+
+        /* スマホ表示での調整 */
+        @media screen and (max-width: 600px) {
+            .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 80px 15px; }
+            .header-title h1 { font-size: 18px; }
+            .result-table { font-size: 11px; }
         }
     </style>
 </head>
@@ -112,7 +129,6 @@
             <div class="sub-title">ITS U-15 GIRLS PERFORMANCE REPORT</div>
             <h1>ITS U-15G 体力測定結果</h1>
         </div>
-        <div style="font-size: 9px; color: #666;">CONDITIONING SYSTEM v2.1</div>
     </div>
 
     <div class="info-grid">
@@ -146,10 +162,10 @@
             <table class="result-table">
                 <thead>
                     <tr>
-                        <th style="width: 31%;">測定項目</th>
-                        <th style="width: 23%;">目標値</th>
-                        <th style="width: 23%;">前回</th>
-                        <th style="width: 23%;">今回</th>
+                        <th style="width: 34%;">測定項目</th>
+                        <th style="width: 22%;">目標</th>
+                        <th style="width: 22%;">前回</th>
+                        <th style="width: 22%;">今回</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -158,8 +174,8 @@
 
         <div class="comment-section">
             <label>COACH'S ADVICE</label>
-            <textarea class="comment-box" id="mComment" placeholder="指導者からのフィードバックを入力"></textarea>
-            <div id="pComment" class="print-only comment-box-print"></div>
+            <textarea class="comment-box" id="mComment" placeholder="フィードバックを入力"></textarea>
+            <div id="pComment" class="print-only" style="white-space: pre-wrap; font-size: 13px;"></div>
         </div>
     </div>
 
@@ -170,11 +186,12 @@
 </div>
 
 <div class="no-print-area">
-    <button onclick="updateChart()" class="btn-update">更新</button>
-    <button onclick="prepareAndPrint()" class="btn-print">PDF保存 / 印刷</button>
+    <button onclick="updateChart()" class="btn-update">グラフ更新</button>
+    <button onclick="prepareAndPrint()" class="btn-print">PDF作成</button>
 </div>
 
 <script>
+// データの定義（画像の値を反映）
 const items = [
     { label: '20m走(秒)', isTime: true, t: 3.5, p: 3.8, a: 3.6 },
     { label: 'プロアジ(秒)', isTime: true, t: 5.5, p: 6.0, a: 5.8 },
@@ -189,9 +206,9 @@ items.forEach((item, i) => {
     tbody.innerHTML += `
         <tr>
             <td class="item-label">${item.label}</td>
-            <td><input type="number" id="t${i}" value="${item.t}" step="0.1"><span id="pt${i}" class="print-only"></span></td>
-            <td><input type="number" id="p${i}" value="${item.p}" step="0.1"><span id="pp${i}" class="print-only"></span></td>
-            <td class="current-val"><input type="number" id="a${i}" value="${item.a}" step="0.1"><span id="pa${i}" class="print-only"></span></td>
+            <td><input type="number" id="t${i}" value="${item.t}" step="0.1"><span class="print-only" id="pt${i}"></span></td>
+            <td><input type="number" id="p${i}" value="${item.p}" step="0.1"><span class="print-only" id="pp${i}"></span></td>
+            <td class="current-val"><input type="number" id="a${i}" value="${item.a}" step="0.1"><span class="print-only" id="pa${i}"></span></td>
         </tr>
     `;
 });
@@ -219,20 +236,41 @@ function updateChart() {
 
     const ctx = document.getElementById('fitnessChart').getContext('2d');
     if(myChart) myChart.destroy();
+    
     myChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: items.map(item => item.label.split('(')[0]),
             datasets: [
-                { label: '目標', data: [100,100,100,100,100,100], borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
-                { label: '前回', data: scoresPrev, backgroundColor: 'rgba(200, 200, 200, 0.2)', borderColor: '#bbb', borderWidth: 1 },
-                { label: '今回', data: scoresCurr, backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', borderWidth: 3, pointBackgroundColor: '#ff007f', pointRadius: 3 }
+                { 
+                    label: '目標', data: [100,100,100,100,100,100], 
+                    borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 
+                },
+                { 
+                    label: '前回', data: scoresPrev, 
+                    backgroundColor: 'transparent', borderColor: '#aaa', 
+                    borderWidth: 2, borderDash: [5, 5], // 点線にして見やすく
+                    pointBackgroundColor: '#aaa', pointRadius: 3
+                },
+                { 
+                    label: '今回', data: scoresCurr, 
+                    backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', 
+                    borderWidth: 4, pointBackgroundColor: '#ff007f', pointRadius: 5 
+                }
             ]
         },
         options: {
             animation: false,
-            scales: { r: { min: 0, max: 120, ticks: { display: false }, grid: { color: '#eee' }, angleLines: { color: '#eee' }, pointLabels: { font: { size: 10, weight: 'bold' }, color: '#001529' } } },
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' }, padding: 10 } } }
+            scales: { 
+                r: { 
+                    min: 0, max: 120, 
+                    ticks: { display: false },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    angleLines: { color: 'rgba(0,0,0,0.1)' },
+                    pointLabels: { font: { size: 11, weight: 'bold' }, color: '#001529' } 
+                } 
+            },
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } } }
         }
     });
 }
