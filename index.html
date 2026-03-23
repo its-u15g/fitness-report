@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="notranslate">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITS U-15G 体力測定レポート</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -9,10 +10,8 @@
         :root {
             --its-navy: #001529;
             --its-pink: #ff007f;
-            --its-gray: #888;
         }
 
-        /* 印刷設定: 余白をゼロにしてブラウザの自動改ページを防止 */
         @page {
             size: A4;
             margin: 0;
@@ -33,7 +32,7 @@
             box-sizing: border-box;
             position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            overflow: hidden; /* はみ出しによる2ページ目を防止 */
+            overflow: hidden;
         }
 
         .header {
@@ -48,6 +47,7 @@
         .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; }
         .header-title .sub-title { color: var(--its-pink); font-weight: bold; font-size: 11px; }
 
+        /* 入力項目のグリッド：スマホでバランスを整える */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -63,6 +63,7 @@
         .info-item input { 
             border: 1px solid #ddd; padding: 8px; font-size: 15px; 
             width: 100%; box-sizing: border-box; border-radius: 4px;
+            background-color: #fff;
         }
 
         .chart-section { display: flex; justify-content: center; margin-bottom: 15px; }
@@ -83,16 +84,9 @@
         }
 
         .footer {
-            position: absolute;
-            bottom: 10mm;
-            left: 15mm;
-            right: 15mm;
-            border-top: 1px solid #eee;
-            padding-top: 5px; 
-            display: flex;
-            justify-content: space-between;
-            color: #999;
-            font-size: 9px;
+            position: absolute; bottom: 8mm; left: 15mm; right: 15mm;
+            border-top: 1px solid #eee; padding-top: 5px; 
+            display: flex; justify-content: space-between; color: #999; font-size: 9px;
         }
 
         .no-print-area { 
@@ -113,12 +107,8 @@
         @media print {
             body { background: white; margin: 0; padding: 0; }
             .a4-page { 
-                margin: 0; 
-                width: 210mm; 
-                height: 296.5mm; /* 297mmより僅かに短くしてオーバーフローを防ぐ */
-                box-shadow: none; 
-                padding: 10mm 15mm;
-                page-break-after: avoid;
+                margin: 0 auto; width: 210mm; height: 296mm; 
+                box-shadow: none; padding: 10mm 15mm; page-break-after: avoid;
             }
             .no-print-area, input { display: none !important; }
             .print-only { display: block !important; }
@@ -128,7 +118,6 @@
 
         @media screen and (max-width: 600px) {
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; }
-            .header-title h1 { font-size: 18px; }
             .info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .info-grid .info-item:nth-child(3) { grid-column: span 2; }
             .footer { position: static; margin-top: 20px; padding-bottom: 20px; }
@@ -140,24 +129,24 @@
 <div class="a4-page">
     <div class="header">
         <div class="header-title">
-            [span_0](start_span)<div class="sub-title">ITS U-15 GIRLS PERFORMANCE REPORT[span_0](end_span)</div>
-            [span_1](start_span)<h1>ITS U-15G 体力測定結果[span_1](end_span)</h1>
+            <div class="sub-title">ITS U-15 GIRLS PERFORMANCE REPORT</div>
+            <h1>ITS U-15G 体力測定結果</h1>
         </div>
     </div>
 
     <div class="info-grid">
         <div class="info-item">
-            [span_2](start_span)<label>測定日 DATE[span_2](end_span)</label>
+            <label>測定日 DATE</label>
             <input type="date" id="mDate" value="2026-03-23">
             <span id="pDate" class="print-only"></span>
         </div>
         <div class="info-item">
-            [span_3](start_span)<label>学年 GRADE[span_3](end_span)</label>
+            <label>学年 GRADE</label>
             <input type="text" id="mGrade" placeholder="例：中学2年">
             <span id="pGrade" class="print-only"></span>
         </div>
         <div class="info-item">
-            [span_4](start_span)<label>選手名 NAME[span_4](end_span)</label>
+            <label>選手名 NAME</label>
             <input type="text" id="mName" placeholder="選手氏名を入力">
             <span id="pName" class="print-only"></span>
         </div>
@@ -172,7 +161,7 @@
         </div>
 
         <div class="table-section">
-            [span_5](start_span)<h3>■ 測定データ比較[span_5](end_span)</h3>
+            <h3>■ 測定データ比較</h3>
             <table class="result-table">
                 <thead>
                     <tr>
@@ -188,8 +177,8 @@
     </div>
 
     <div class="footer">
-        [span_6](start_span)<div>ITS U-15G / Physical Fitness Analysis[span_6](end_span)</div>
-        [span_7](start_span)<div>https://its-u15g.github.io/[span_7](end_span)</div>
+        <div>ITS U-15G / Physical Fitness Analysis</div>
+        <div>https://its-u15g.github.io/</div>
     </div>
 </div>
 
@@ -199,7 +188,7 @@
 </div>
 
 <script>
-[span_8](start_span)// 九州レベルの目標値[span_8](end_span)
+// 九州レベルの目標値
 const items = [
     { label: '20m走(秒)', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
     { label: 'プロアジ(秒)', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
@@ -233,6 +222,7 @@ function updateChart() {
         const t = parseFloat(document.getElementById('t'+i).value) || 1;
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
+        // 時間種目は低い方が100%に近くなるよう計算
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
         scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
         document.getElementById('pt'+i).innerText = t;
