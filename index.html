@@ -12,9 +12,16 @@
             --its-gray: #888;
         }
 
+        /* 印刷設定: 余白をゼロにしてブラウザの自動改ページを防止 */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
         body { 
             margin: 0; padding: 0; background-color: #f0f2f5; 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
+            -webkit-print-color-adjust: exact;
         }
 
         .a4-page {
@@ -26,12 +33,13 @@
             box-sizing: border-box;
             position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden; /* はみ出しによる2ページ目を防止 */
         }
 
         .header {
             border-bottom: 2px solid var(--its-navy);
             padding-bottom: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -44,7 +52,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .info-item label { 
@@ -53,35 +61,43 @@
         }
 
         .info-item input { 
-            border: 1px solid #ddd; padding: 10px; font-size: 16px; 
+            border: 1px solid #ddd; padding: 8px; font-size: 15px; 
             width: 100%; box-sizing: border-box; border-radius: 4px;
         }
 
-        .chart-section { display: flex; justify-content: center; margin-bottom: 20px; }
-        .chart-container { width: 100%; max-width: 340px; aspect-ratio: 1/1; }
-        #chartImage { display: none; width: 100%; max-width: 340px; }
+        .chart-section { display: flex; justify-content: center; margin-bottom: 15px; }
+        .chart-container { width: 100%; max-width: 330px; aspect-ratio: 1/1; }
+        #chartImage { display: none; width: 100%; max-width: 330px; }
 
-        .table-section h3 { font-size: 14px; color: var(--its-navy); border-bottom: 1px solid var(--its-navy); padding-bottom: 3px; margin: 10px 0; }
+        .table-section h3 { font-size: 14px; color: var(--its-navy); border-bottom: 1px solid var(--its-navy); padding-bottom: 3px; margin: 8px 0; }
 
-        .result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .result-table th { background-color: var(--its-navy); color: white; padding: 8px; border: 1px solid #fff; }
-        .result-table td { padding: 8px; text-align: center; border: 1px solid #eee; }
+        .result-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        .result-table th { background-color: var(--its-navy); color: white; padding: 7px; border: 1px solid #fff; }
+        .result-table td { padding: 7px; text-align: center; border: 1px solid #eee; }
         .item-label { text-align: left !important; font-weight: bold; background: #fafafa; }
         .current-val { font-weight: bold; background-color: #fff0f6; color: var(--its-pink); }
         
         .result-table input { 
-            width: 100%; max-width: 60px; text-align: center; border: 1px solid #ccc; 
-            padding: 8px 4px; font-size: 14px; border-radius: 4px;
+            width: 100%; max-width: 55px; text-align: center; border: 1px solid #ccc; 
+            padding: 6px 4px; font-size: 13px; border-radius: 4px;
         }
 
         .footer {
-            margin-top: 20px; border-top: 1px solid #eee; padding-top: 5px; 
-            display: flex; justify-content: space-between; color: #999; font-size: 9px;
+            position: absolute;
+            bottom: 10mm;
+            left: 15mm;
+            right: 15mm;
+            border-top: 1px solid #eee;
+            padding-top: 5px; 
+            display: flex;
+            justify-content: space-between;
+            color: #999;
+            font-size: 9px;
         }
 
         .no-print-area { 
             position: fixed; bottom: 0; left: 0; right: 0; 
-            background: rgba(255,255,255,0.9); padding: 15px; 
+            background: rgba(255,255,255,0.95); padding: 15px; 
             display: flex; justify-content: center; gap: 10px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000;
         }
@@ -95,21 +111,27 @@
         .print-only { display: none; }
 
         @media print {
-            body { background: white; }
-            .a4-page { margin: 0; width: 210mm; height: 297mm; box-shadow: none; padding: 10mm 15mm; }
-            .no-print-area, input, textarea { display: none !important; }
+            body { background: white; margin: 0; padding: 0; }
+            .a4-page { 
+                margin: 0; 
+                width: 210mm; 
+                height: 296.5mm; /* 297mmより僅かに短くしてオーバーフローを防ぐ */
+                box-shadow: none; 
+                padding: 10mm 15mm;
+                page-break-after: avoid;
+            }
+            .no-print-area, input { display: none !important; }
             .print-only { display: block !important; }
             #fitnessChart { display: none !important; }
             #chartImage { display: block !important; margin: 0 auto; }
-            .footer { position: absolute; bottom: 10mm; left: 15mm; right: 15mm; }
         }
 
         @media screen and (max-width: 600px) {
-            .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 80px 15px; }
+            .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; }
             .header-title h1 { font-size: 18px; }
-            .result-table { font-size: 11px; }
             .info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .info-grid .info-item:nth-child(3) { grid-column: span 2; }
+            .footer { position: static; margin-top: 20px; padding-bottom: 20px; }
         }
     </style>
 </head>
@@ -118,24 +140,24 @@
 <div class="a4-page">
     <div class="header">
         <div class="header-title">
-            <div class="sub-title">ITS U-15 GIRLS PERFORMANCE REPORT</div>
-            <h1>ITS U-15G 体力測定結果</h1>
+            [span_0](start_span)<div class="sub-title">ITS U-15 GIRLS PERFORMANCE REPORT[span_0](end_span)</div>
+            [span_1](start_span)<h1>ITS U-15G 体力測定結果[span_1](end_span)</h1>
         </div>
     </div>
 
     <div class="info-grid">
         <div class="info-item">
-            <label>測定日 DATE</label>
+            [span_2](start_span)<label>測定日 DATE[span_2](end_span)</label>
             <input type="date" id="mDate" value="2026-03-23">
             <span id="pDate" class="print-only"></span>
         </div>
         <div class="info-item">
-            <label>学年 GRADE</label>
+            [span_3](start_span)<label>学年 GRADE[span_3](end_span)</label>
             <input type="text" id="mGrade" placeholder="例：中学2年">
             <span id="pGrade" class="print-only"></span>
         </div>
         <div class="info-item">
-            <label>選手名 NAME</label>
+            [span_4](start_span)<label>選手名 NAME[span_4](end_span)</label>
             <input type="text" id="mName" placeholder="選手氏名を入力">
             <span id="pName" class="print-only"></span>
         </div>
@@ -150,7 +172,7 @@
         </div>
 
         <div class="table-section">
-            <h3>■ 測定データ比較</h3>
+            [span_5](start_span)<h3>■ 測定データ比較[span_5](end_span)</h3>
             <table class="result-table">
                 <thead>
                     <tr>
@@ -166,8 +188,8 @@
     </div>
 
     <div class="footer">
-        <div>ITS U-15G / Physical Fitness Analysis</div>
-        <div>https://its-u15g.github.io/</div>
+        [span_6](start_span)<div>ITS U-15G / Physical Fitness Analysis[span_6](end_span)</div>
+        [span_7](start_span)<div>https://its-u15g.github.io/[span_7](end_span)</div>
     </div>
 </div>
 
@@ -177,7 +199,7 @@
 </div>
 
 <script>
-// 九州レベルの目標値を反映
+[span_8](start_span)// 九州レベルの目標値[span_8](end_span)
 const items = [
     { label: '20m走(秒)', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
     { label: 'プロアジ(秒)', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
