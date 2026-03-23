@@ -191,14 +191,17 @@
 </div>
 
 <script>
-// データの定義（画像の値を反映）
+// データの定義（9項目に更新）
 const items = [
     { label: '20m走(秒)', isTime: true, t: 3.5, p: 3.8, a: 3.6 },
     { label: 'プロアジ(秒)', isTime: true, t: 5.5, p: 6.0, a: 5.8 },
     { label: '立ち幅跳び(cm)', isTime: false, t: 210, p: 185, a: 195 },
-    { label: 'メディシン(3kg/m)', isTime: false, t: 7.0, p: 6.0, a: 6.5 },
-    { label: 'シャトルラン', isTime: false, t: 80, p: 60, a: 65 },
-    { label: '握力平均(kg)', isTime: false, t: 35, p: 27, a: 29 }
+    { label: '立ち三段跳び(m)', isTime: false, t: 6.0, p: 5.5, a: 5.8 },
+    { label: '握力(右)(kg)', isTime: false, t: 30, p: 25, a: 28 },
+    { label: '握力(左)(kg)', isTime: false, t: 30, p: 24, a: 26 },
+    { label: 'メディシン(上)(m)', isTime: false, t: 8.0, p: 6.5, a: 7.0 },
+    { label: 'メディシン(下)(m)', isTime: false, t: 8.0, p: 6.0, a: 6.5 },
+    { label: 'シャトルラン(回)', isTime: false, t: 80, p: 60, a: 65 }
 ];
 
 const tbody = document.getElementById('tableBody');
@@ -222,6 +225,7 @@ function updateChart() {
         const t = parseFloat(document.getElementById('t'+i).value) || 0;
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
+        // isTimeがtrueのものは数値が小さいほど高得点になる計算式
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
         scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
         document.getElementById('pt'+i).innerText = t;
@@ -243,13 +247,14 @@ function updateChart() {
             labels: items.map(item => item.label.split('(')[0]),
             datasets: [
                 { 
-                    label: '目標', data: [100,100,100,100,100,100], 
+                    // 項目数に合わせて100の配列を自動生成するように修正
+                    label: '目標', data: Array(items.length).fill(100), 
                     borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 
                 },
                 { 
                     label: '前回', data: scoresPrev, 
                     backgroundColor: 'transparent', borderColor: '#aaa', 
-                    borderWidth: 2, borderDash: [5, 5], // 点線にして見やすく
+                    borderWidth: 2, borderDash: [5, 5], 
                     pointBackgroundColor: '#aaa', pointRadius: 3
                 },
                 { 
