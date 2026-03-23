@@ -17,7 +17,6 @@
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
         }
 
-        /* PC・タブレットでの表示設定 */
         .a4-page {
             width: 210mm;
             min-height: 296mm;
@@ -41,10 +40,10 @@
         .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; }
         .header-title .sub-title { color: var(--its-pink); font-weight: bold; font-size: 11px; }
 
-        /* 選手情報：スマホでは1列、PCでは3列 */
+        /* 選手情報：PCでは3列均等 */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -55,7 +54,7 @@
         }
 
         .info-item input { 
-            border: 1px solid #ddd; padding: 10px; font-size: 16px; /* スマホでズームしないよう16px */
+            border: 1px solid #ddd; padding: 10px; font-size: 16px; 
             width: 100%; box-sizing: border-box; border-radius: 4px;
         }
 
@@ -71,22 +70,16 @@
         .item-label { text-align: left !important; font-weight: bold; background: #fafafa; }
         .current-val { font-weight: bold; background-color: #fff0f6; color: var(--its-pink); }
         
-        /* スマホ用入力欄の拡大 */
         .result-table input { 
             width: 100%; max-width: 60px; text-align: center; border: 1px solid #ccc; 
             padding: 8px 4px; font-size: 14px; border-radius: 4px;
         }
-
-        .comment-section { margin-top: 15px; border: 1.2px solid var(--its-navy); border-radius: 4px; padding: 10px; }
-        .comment-section label { font-size: 11px; font-weight: bold; color: var(--its-pink); display: block; margin-bottom: 5px; }
-        .comment-box { width: 100%; height: 60px; border: none; resize: none; font-size: 14px; outline: none; }
 
         .footer {
             margin-top: 20px; border-top: 1px solid #eee; padding-top: 5px; 
             display: flex; justify-content: space-between; color: #999; font-size: 9px;
         }
 
-        /* 操作パネル（スマホでも使いやすく） */
         .no-print-area { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             background: rgba(255,255,255,0.9); padding: 15px; 
@@ -102,7 +95,6 @@
 
         .print-only { display: none; }
 
-        /* 印刷・PDF用の設定（A4固定） */
         @media print {
             body { background: white; }
             .a4-page { margin: 0; width: 210mm; height: 297mm; box-shadow: none; padding: 10mm 15mm; }
@@ -118,6 +110,15 @@
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 80px 15px; }
             .header-title h1 { font-size: 18px; }
             .result-table { font-size: 11px; }
+            
+            /* スマホ時の上部入力欄のバランス調整 */
+            .info-grid {
+                grid-template-columns: 1fr 1fr; /* 2列にする */
+                gap: 10px;
+            }
+            .info-grid .info-item:nth-child(3) {
+                grid-column: span 2; /* 選手名は2列分（横幅いっぱい）使う */
+            }
         }
     </style>
 </head>
@@ -171,12 +172,6 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
-
-        <div class="comment-section">
-            <label>COACH'S ADVICE</label>
-            <textarea class="comment-box" id="mComment" placeholder="フィードバックを入力"></textarea>
-            <div id="pComment" class="print-only" style="white-space: pre-wrap; font-size: 13px;"></div>
-        </div>
     </div>
 
     <div class="footer">
@@ -191,7 +186,6 @@
 </div>
 
 <script>
-// データの定義（9項目に更新）
 const items = [
     { label: '20m走(秒)', isTime: true, t: 3.5, p: 3.8, a: 3.6 },
     { label: 'プロアジ(秒)', isTime: true, t: 5.5, p: 6.0, a: 5.8 },
@@ -225,7 +219,6 @@ function updateChart() {
         const t = parseFloat(document.getElementById('t'+i).value) || 0;
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
-        // isTimeがtrueのものは数値が小さいほど高得点になる計算式
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
         scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
         document.getElementById('pt'+i).innerText = t;
@@ -236,7 +229,6 @@ function updateChart() {
     document.getElementById('pDate').innerText = document.getElementById('mDate').value;
     document.getElementById('pGrade').innerText = document.getElementById('mGrade').value || " ";
     document.getElementById('pName').innerText = document.getElementById('mName').value || " ";
-    document.getElementById('pComment').innerText = document.getElementById('mComment').value;
 
     const ctx = document.getElementById('fitnessChart').getContext('2d');
     if(myChart) myChart.destroy();
@@ -247,7 +239,6 @@ function updateChart() {
             labels: items.map(item => item.label.split('(')[0]),
             datasets: [
                 { 
-                    // 項目数に合わせて100の配列を自動生成するように修正
                     label: '目標', data: Array(items.length).fill(100), 
                     borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 
                 },
