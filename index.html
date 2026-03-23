@@ -40,7 +40,6 @@
         .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; }
         .header-title .sub-title { color: var(--its-pink); font-weight: bold; font-size: 11px; }
 
-        /* 選手情報：PCでは3列均等 */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -105,20 +104,12 @@
             .footer { position: absolute; bottom: 10mm; left: 15mm; right: 15mm; }
         }
 
-        /* スマホ表示での調整 */
         @media screen and (max-width: 600px) {
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 80px 15px; }
             .header-title h1 { font-size: 18px; }
             .result-table { font-size: 11px; }
-            
-            /* スマホ時の上部入力欄のバランス調整 */
-            .info-grid {
-                grid-template-columns: 1fr 1fr; /* 2列にする */
-                gap: 10px;
-            }
-            .info-grid .info-item:nth-child(3) {
-                grid-column: span 2; /* 選手名は2列分（横幅いっぱい）使う */
-            }
+            .info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .info-grid .info-item:nth-child(3) { grid-column: span 2; }
         }
     </style>
 </head>
@@ -135,7 +126,7 @@
     <div class="info-grid">
         <div class="info-item">
             <label>測定日 DATE</label>
-            <input type="date" id="mDate" value="2026-03-19">
+            <input type="date" id="mDate" value="2026-03-23">
             <span id="pDate" class="print-only"></span>
         </div>
         <div class="info-item">
@@ -186,16 +177,17 @@
 </div>
 
 <script>
+// 九州レベルの目標値を反映
 const items = [
-    { label: '20m走(秒)', isTime: true, t: 3.5, p: 3.8, a: 3.6 },
-    { label: 'プロアジ(秒)', isTime: true, t: 5.5, p: 6.0, a: 5.8 },
-    { label: '立ち幅跳び(cm)', isTime: false, t: 210, p: 185, a: 195 },
-    { label: '立ち三段跳び(m)', isTime: false, t: 6.0, p: 5.5, a: 5.8 },
-    { label: '握力(右)(kg)', isTime: false, t: 30, p: 25, a: 28 },
-    { label: '握力(左)(kg)', isTime: false, t: 30, p: 24, a: 26 },
-    { label: 'メディシン(上)(m)', isTime: false, t: 8.0, p: 6.5, a: 7.0 },
-    { label: 'メディシン(下)(m)', isTime: false, t: 8.0, p: 6.0, a: 6.5 },
-    { label: 'シャトルラン(回)', isTime: false, t: 80, p: 60, a: 65 }
+    { label: '20m走(秒)', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
+    { label: 'プロアジ(秒)', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
+    { label: '立ち幅跳び(cm)', isTime: false, t: 215, p: 190, a: 200 },
+    { label: '立ち三段跳び(m)', isTime: false, t: 6.2, p: 5.6, a: 5.8 },
+    { label: '握力(右)(kg)', isTime: false, t: 33, p: 26, a: 28 },
+    { label: '握力(左)(kg)', isTime: false, t: 31, p: 24, a: 26 },
+    { label: 'メディシン(上)(m)', isTime: false, t: 8.5, p: 7.0, a: 7.5 },
+    { label: 'メディシン(下)(m)', isTime: false, t: 9.0, p: 7.0, a: 7.8 },
+    { label: 'シャトルラン(回)', isTime: false, t: 85, p: 65, a: 72 }
 ];
 
 const tbody = document.getElementById('tableBody');
@@ -216,7 +208,7 @@ function updateChart() {
     const scoresPrev = [];
     const scoresCurr = [];
     items.forEach((item, i) => {
-        const t = parseFloat(document.getElementById('t'+i).value) || 0;
+        const t = parseFloat(document.getElementById('t'+i).value) || 1;
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
@@ -263,7 +255,7 @@ function updateChart() {
                     ticks: { display: false },
                     grid: { color: 'rgba(0,0,0,0.05)' },
                     angleLines: { color: 'rgba(0,0,0,0.1)' },
-                    pointLabels: { font: { size: 11, weight: 'bold' }, color: '#001529' } 
+                    pointLabels: { font: { size: 10, weight: 'bold' }, color: '#001529' } 
                 } 
             },
             plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } } }
