@@ -47,7 +47,7 @@
         .header-title h1 { color: var(--its-navy); font-size: 22px; margin: 0; }
         .header-title .sub-title { color: var(--its-pink); font-weight: bold; font-size: 11px; }
 
-        /* 入力項目のグリッド：スマホでバランスを整える */
+        /* 入力項目のグリッド：PCでは3列 */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -116,10 +116,11 @@
             #chartImage { display: block !important; margin: 0 auto; }
         }
 
+        /* スマホ表示での調整 */
         @media screen and (max-width: 600px) {
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; }
-            .info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .info-grid .info-item:nth-child(3) { grid-column: span 2; }
+            /* スマホでは横幅が狭いため、1列に縦並びにする */
+            .info-grid { grid-template-columns: 1fr; gap: 10px; }
             .footer { position: static; margin-top: 20px; padding-bottom: 20px; }
         }
     </style>
@@ -188,17 +189,17 @@
 </div>
 
 <script>
-// 九州レベルの目標値
+// 九州レベルの目標値と、グラフ表示用の短い名前（chartLabel）を追加
 const items = [
-    { label: '20m走(秒)', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
-    { label: 'プロアジ(秒)', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
-    { label: '立ち幅跳び(cm)', isTime: false, t: 215, p: 190, a: 200 },
-    { label: '立ち三段跳び(m)', isTime: false, t: 6.2, p: 5.6, a: 5.8 },
-    { label: '握力(右)(kg)', isTime: false, t: 33, p: 26, a: 28 },
-    { label: '握力(左)(kg)', isTime: false, t: 31, p: 24, a: 26 },
-    { label: 'メディシン(上)(m)', isTime: false, t: 8.5, p: 7.0, a: 7.5 },
-    { label: 'メディシン(下)(m)', isTime: false, t: 9.0, p: 7.0, a: 7.8 },
-    { label: 'シャトルラン(回)', isTime: false, t: 85, p: 65, a: 72 }
+    { label: '20m走(秒)', chartLabel: '20m走', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
+    { label: 'プロアジ(秒)', chartLabel: 'プロアジ', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
+    { label: '立ち幅跳び(cm)', chartLabel: '立ち幅跳び', isTime: false, t: 215, p: 190, a: 200 },
+    { label: '立ち三段跳び(m)', chartLabel: '立ち三段跳び', isTime: false, t: 6.2, p: 5.6, a: 5.8 },
+    { label: '握力(右)(kg)', chartLabel: '握力(右)', isTime: false, t: 33, p: 26, a: 28 },
+    { label: '握力(左)(kg)', chartLabel: '握力(左)', isTime: false, t: 31, p: 24, a: 26 },
+    { label: 'メディシン(上)(m)', chartLabel: 'メディシン(上)', isTime: false, t: 8.5, p: 7.0, a: 7.5 },
+    { label: 'メディシン(下)(m)', chartLabel: 'メディシン(下)', isTime: false, t: 9.0, p: 7.0, a: 7.8 },
+    { label: 'シャトルラン(回)', chartLabel: 'シャトルラン', isTime: false, t: 85, p: 65, a: 72 }
 ];
 
 const tbody = document.getElementById('tableBody');
@@ -240,7 +241,8 @@ function updateChart() {
     myChart = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: items.map(item => item.label.split('(')[0]),
+            // chartLabelの値をそのまま使うように修正
+            labels: items.map(item => item.chartLabel),
             datasets: [
                 { 
                     label: '目標', data: Array(items.length).fill(100), 
