@@ -97,38 +97,53 @@
 
         .print-only { display: none; }
 
-        /* ★PDF出力時の専用レイアウト：隙間を詰めて文字サイズを維持する */
+        /* ★PDF出力時の専用レイアウト：強制的にA4(1ページ)に固定し、はみ出しをカットする */
         @media print {
             html, body { 
-                background: white; margin: 0 !important; padding: 0 !important; 
-                width: 100% !important; height: auto !important; 
+                background: white; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 210mm !important; 
+                height: 297mm !important; 
+                overflow: hidden !important; 
             }
             .a4-page { 
-                margin: 0 auto !important; width: 100% !important; 
-                /* 高さをA4より約3cm（30mm）短く設定し、iPhoneのヘッダー・フッター分を確保 */
-                max-height: 265mm !important; 
-                padding: 5mm 10mm !important; 
-                box-shadow: none; 
-                page-break-after: avoid !important; page-break-inside: avoid !important;
+                margin: 0 !important; 
+                padding: 10mm 15mm !important; 
+                width: 210mm !important; 
+                height: 296mm !important; /* 297mmより1mmだけ短くして2ページ目発生を防止 */
+                box-sizing: border-box !important;
+                box-shadow: none !important; 
+                page-break-after: avoid !important; 
+                page-break-before: avoid !important;
                 overflow: hidden !important;
             }
             
-            /* 印刷時のみ、各ブロック間の隙間（マージン）をギュッと詰める */
-            .header { margin-bottom: 5px !important; padding-bottom: 5px !important; }
-            .info-grid { margin-bottom: 5px !important; gap: 8px !important; }
-            .chart-section { margin-bottom: 5px !important; }
+            /* 各ブロック間の隙間を少し詰めて、iPhoneのヘッダー・フッターに重ならないようにする */
+            .header { margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            .info-grid { margin-bottom: 10px !important; gap: 10px !important; }
+            .chart-section { margin-bottom: 10px !important; }
             .table-section h3 { margin: 5px 0 !important; }
+            .result-table td, .result-table th { padding: 6px !important; }
             
-            /* グラフ画像を少しだけ小さくして高さを稼ぐ */
-            #chartImage { display: block !important; margin: 0 auto; max-width: 280px !important; }
+            /* グラフ画像は元の大きさ（最大）をキープ */
+            #chartImage { 
+                display: block !important; 
+                margin: 0 auto !important; 
+                width: 100% !important; 
+                max-width: 330px !important; 
+            }
             #fitnessChart { display: none !important; }
 
             .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
             
             .footer { 
-                position: relative !important; bottom: auto !important; 
-                margin-top: 10px !important; 
+                position: absolute !important; 
+                bottom: 10mm !important; 
+                left: 15mm !important; 
+                right: 15mm !important; 
+                margin-top: 0 !important; 
             }
         }
 
@@ -208,111 +223,4 @@ const items = [
     { label: '20m走(秒)', chartLabel: '20m走', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
     { label: 'プロアジ(秒)', chartLabel: 'プロアジ', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
     { label: '立ち幅跳び(cm)', chartLabel: '立ち幅跳び', isTime: false, t: 215, p: 190, a: 200 },
-    { label: '立ち三段跳び(m)', chartLabel: '立ち三段跳び', isTime: false, t: 6.2, p: 5.6, a: 5.8 },
-    { label: '握力(右)(kg)', chartLabel: '握力(右)', isTime: false, t: 33, p: 26, a: 28 },
-    { label: '握力(左)(kg)', chartLabel: '握力(左)', isTime: false, t: 31, p: 24, a: 26 },
-    { label: 'メディシン(上)(m)', chartLabel: 'メディシン(上)', isTime: false, t: 8.5, p: 7.0, a: 7.5 },
-    { label: 'メディシン(下)(m)', chartLabel: 'メディシン(下)', isTime: false, t: 9.0, p: 7.0, a: 7.8 },
-    { label: 'シャトルラン(回)', chartLabel: 'シャトルラン', isTime: false, t: 85, p: 65, a: 72 }
-];
-
-const tbody = document.getElementById('tableBody');
-items.forEach((item, i) => {
-    tbody.innerHTML += `
-        <tr>
-            <td class="item-label">${item.label}</td>
-            <td><input type="number" id="t${i}" value="${item.t}" step="0.1"><span class="print-only" id="pt${i}"></span></td>
-            <td><input type="number" id="p${i}" value="${item.p}" step="0.1"><span class="print-only" id="pp${i}"></span></td>
-            <td class="current-val"><input type="number" id="a${i}" value="${item.a}" step="0.1"><span class="print-only" id="pa${i}"></span></td>
-        </tr>
-    `;
-});
-
-let myChart = null;
-
-function updateChart() {
-    const scoresPrev = [];
-    const scoresCurr = [];
-    items.forEach((item, i) => {
-        const t = parseFloat(document.getElementById('t'+i).value) || 1;
-        const p = parseFloat(document.getElementById('p'+i).value) || 0;
-        const a = parseFloat(document.getElementById('a'+i).value) || 0;
-        scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
-        scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
-        document.getElementById('pt'+i).innerText = t;
-        document.getElementById('pp'+i).innerText = p;
-        document.getElementById('pa'+i).innerText = a;
-    });
-
-    document.getElementById('pDate').innerText = document.getElementById('mDate').value;
-    document.getElementById('pGrade').innerText = document.getElementById('mGrade').value || " ";
-    document.getElementById('pName').innerText = document.getElementById('mName').value || " ";
-
-    const ctx = document.getElementById('fitnessChart').getContext('2d');
-    if(myChart) myChart.destroy();
-    
-    myChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: items.map(item => item.chartLabel),
-            datasets: [
-                { label: '目標', data: Array(items.length).fill(100), borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
-                { label: '前回', data: scoresPrev, backgroundColor: 'transparent', borderColor: '#aaa', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#aaa', pointRadius: 3 },
-                { label: '今回', data: scoresCurr, backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', borderWidth: 4, pointBackgroundColor: '#ff007f', pointRadius: 5 }
-            ]
-        },
-        options: {
-            animation: false,
-            scales: { 
-                r: { min: 0, max: 120, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' }, angleLines: { color: 'rgba(0,0,0,0.1)' }, pointLabels: { font: { size: 10, weight: 'bold' }, color: '#001529' } } 
-            },
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } } }
-        }
-    });
-}
-
-function prepareAndPrint() {
-    updateChart();
-    const canvas = document.getElementById('fitnessChart');
-    const img = document.getElementById('chartImage');
-    img.src = canvas.toDataURL('image/png');
-    setTimeout(() => { window.print(); }, 400); 
-}
-
-function sendData() {
-    const btn = document.getElementById('btn-send');
-    btn.innerText = "送信中...";
-    btn.disabled = true;
-
-    const currentResults = items.map((item, i) => document.getElementById('a'+i).value);
-
-    const data = {
-        date: document.getElementById('mDate').value,
-        grade: document.getElementById('mGrade').value,
-        name: document.getElementById('mName').value,
-        results: currentResults
-    };
-
-    const endpoint = "https://script.google.com/macros/s/AKfycbx44Zb2-Q982DQmfjkw47G_8ogzx8MYIqqEYzL7EGMcjkvdU4G-IvsrquhqFZAyjU1t/exec"; 
-
-    fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, 
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        alert('データをスプレッドシートに送信しました！');
-        btn.innerText = "データ送信";
-        btn.disabled = false;
-    })
-    .catch(error => {
-        alert('送信に失敗しました。電波の良いところで再度お試しください。');
-        btn.innerText = "データ送信";
-        btn.disabled = false;
-    });
-}
-
-updateChart();
-</script>
-</body>
-</html>
+    {
