@@ -29,6 +29,7 @@
             background: white; padding: 10mm 15mm;
             box-sizing: border-box; position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            overflow: hidden;
         }
 
         .header {
@@ -73,6 +74,11 @@
             padding: 6px 4px; font-size: 13px; border-radius: 4px; box-sizing: border-box;
             -webkit-appearance: none; margin: 0;
         }
+        
+        /* 基準値（目標・平均）の入力欄は色を変えて分かりやすく */
+        .target-val input {
+            background-color: #f8f9fa; color: #555; border: 1px solid #e2e8f0;
+        }
 
         .footer {
             position: absolute; bottom: 8mm; left: 15mm; right: 15mm;
@@ -96,45 +102,22 @@
 
         .print-only { display: none; }
 
-        /* ★PDF出力時の専用レイアウト：大きさを保ったまま2ページ目を防ぐ */
+        /* PDF出力時の専用レイアウト */
         @media print {
-            html, body { 
-                background: white !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                width: 210mm !important; /* スマホに縮小させないためにA4幅を強制 */
-                height: auto !important; /* 高さは中身に合わせる（2ページ目を作らせない） */
-            }
-            .a4-page { 
-                margin: 0 !important; 
-                padding: 10mm 15mm !important; 
-                width: 210mm !important; 
-                height: auto !important; /* 絶対値の高さを解除 */
-                min-height: 0 !important;
-                box-sizing: border-box !important;
-                box-shadow: none !important; 
-            }
-            
-            /* グラフは大きく綺麗に見せるために最大幅を指定 */
-            #chartImage { 
-                display: block !important; 
-                margin: 0 auto !important; 
-                width: 100% !important; 
-                max-width: 330px !important; 
-            }
+            html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; }
+            .a4-page { margin: 0 !important; padding: 10mm 15mm !important; width: 210mm !important; height: 296mm !important; box-sizing: border-box !important; box-shadow: none !important; page-break-after: avoid !important; page-break-before: avoid !important; overflow: hidden !important; }
+            .header { margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            .info-grid { margin-bottom: 10px !important; gap: 10px !important; }
+            .chart-section { margin-bottom: 10px !important; }
+            .table-section h3 { margin: 5px 0 !important; }
+            .result-table td, .result-table th { padding: 6px !important; }
+            #chartImage { display: block !important; margin: 0 auto !important; width: 100% !important; max-width: 330px !important; }
             #fitnessChart { display: none !important; }
-
             .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
-            
-            /* フッターの「絶対配置」をやめ、表のすぐ下に自然に置くことで下部のオーバーフローを防ぐ */
-            .footer { 
-                position: relative !important; 
-                bottom: auto !important; 
-                left: auto !important; 
-                right: auto !important; 
-                margin-top: 20px !important; 
-            }
+            /* 印刷時はドロップダウンを隠す */
+            .hide-on-print { display: none !important; }
+            .footer { position: absolute !important; bottom: 10mm !important; left: 15mm !important; right: 15mm !important; margin-top: 0 !important; }
         }
 
         @media screen and (max-width: 600px) {
@@ -186,7 +169,15 @@
                 <thead>
                     <tr>
                         <th style="width: 34%;">測定項目</th>
-                        <th style="width: 22%;">目標</th>
+                        <th style="width: 22%;">
+                            <div class="hide-on-print">
+                                <select id="targetSelect" onchange="changeTarget()" style="font-size:12px; padding:2px; border:1px solid #ccc; border-radius:4px; font-weight:bold; color:var(--its-navy); cursor:pointer;">
+                                    <option value="target">目標値</option>
+                                    <option value="average">平均値</option>
+                                </select>
+                            </div>
+                            <div class="print-only" id="printTargetLabel" style="font-size:11.5px;">目標値</div>
+                        </th>
                         <th style="width: 22%;">前回</th>
                         <th style="width: 22%;">今回</th>
                     </tr>
@@ -209,16 +200,17 @@
 </div>
 
 <script>
+// ★ t_target(目標値) と t_avg(平均値) をそれぞれ設定しています。t_avgは後で自由に変更してください。
 const items = [
-    { label: '20m走(秒)', chartLabel: '20m走', isTime: true, t: 3.4, p: 3.7, a: 3.6 },
-    { label: 'プロアジ(秒)', chartLabel: 'プロアジ', isTime: true, t: 5.4, p: 5.8, a: 5.7 },
-    { label: '立ち幅跳び(cm)', chartLabel: '立ち幅跳び', isTime: false, t: 215, p: 190, a: 200 },
-    { label: '立ち三段跳び(m)', chartLabel: '立ち三段跳び', isTime: false, t: 6.2, p: 5.6, a: 5.8 },
-    { label: '握力(右)(kg)', chartLabel: '握力(右)', isTime: false, t: 33, p: 26, a: 28 },
-    { label: '握力(左)(kg)', chartLabel: '握力(左)', isTime: false, t: 31, p: 24, a: 26 },
-    { label: 'メディシン(上)(m)', chartLabel: 'メディシン(上)', isTime: false, t: 8.5, p: 7.0, a: 7.5 },
-    { label: 'メディシン(下)(m)', chartLabel: 'メディシン(下)', isTime: false, t: 9.0, p: 7.0, a: 7.8 },
-    { label: 'シャトルラン(回)', chartLabel: 'シャトルラン', isTime: false, t: 85, p: 65, a: 72 }
+    { label: '20m走(秒)', chartLabel: '20m走', isTime: true, t_target: 3.4, t_avg: 3.8, p: 3.7, a: 3.6 },
+    { label: 'プロアジ(秒)', chartLabel: 'プロアジ', isTime: true, t_target: 5.4, t_avg: 6.0, p: 5.8, a: 5.7 },
+    { label: '立ち幅跳び(cm)', chartLabel: '立ち幅跳び', isTime: false, t_target: 215, t_avg: 180, p: 190, a: 200 },
+    { label: '立ち三段跳び(m)', chartLabel: '立ち三段跳び', isTime: false, t_target: 6.2, t_avg: 5.0, p: 5.6, a: 5.8 },
+    { label: '握力(右)(kg)', chartLabel: '握力(右)', isTime: false, t_target: 33, t_avg: 25, p: 26, a: 28 },
+    { label: '握力(左)(kg)', chartLabel: '握力(左)', isTime: false, t_target: 31, t_avg: 24, p: 24, a: 26 },
+    { label: 'メディシン(上)(m)', chartLabel: 'メディシン(上)', isTime: false, t_target: 8.5, t_avg: 6.0, p: 7.0, a: 7.5 },
+    { label: 'メディシン(下)(m)', chartLabel: 'メディシン(下)', isTime: false, t_target: 9.0, t_avg: 6.5, p: 7.0, a: 7.8 },
+    { label: 'シャトルラン(回)', chartLabel: 'シャトルラン', isTime: false, t_target: 85, t_avg: 50, p: 65, a: 72 }
 ];
 
 const tbody = document.getElementById('tableBody');
@@ -226,7 +218,7 @@ items.forEach((item, i) => {
     tbody.innerHTML += `
         <tr>
             <td class="item-label">${item.label}</td>
-            <td><input type="number" id="t${i}" value="${item.t}" step="0.1"><span class="print-only" id="pt${i}"></span></td>
+            <td class="target-val"><input type="number" id="t${i}" value="${item.t_target}" step="0.1"><span class="print-only" id="pt${i}"></span></td>
             <td><input type="number" id="p${i}" value="${item.p}" step="0.1"><span class="print-only" id="pp${i}"></span></td>
             <td class="current-val"><input type="number" id="a${i}" value="${item.a}" step="0.1"><span class="print-only" id="pa${i}"></span></td>
         </tr>
@@ -234,6 +226,23 @@ items.forEach((item, i) => {
 });
 
 let myChart = null;
+
+// ★ ドロップダウンが変更された時に実行される関数
+function changeTarget() {
+    const type = document.getElementById('targetSelect').value;
+    const isTarget = (type === 'target');
+    
+    // 印刷用の文字を「目標値」か「平均値」に変更
+    document.getElementById('printTargetLabel').innerText = isTarget ? '目標値' : '平均値';
+    
+    // 表の数字を一斉に入れ替え
+    items.forEach((item, i) => {
+        document.getElementById('t'+i).value = isTarget ? item.t_target : item.t_avg;
+    });
+    
+    // グラフも再描画
+    updateChart();
+}
 
 function updateChart() {
     const scoresPrev = [];
@@ -253,6 +262,10 @@ function updateChart() {
     document.getElementById('pGrade').innerText = document.getElementById('mGrade').value || " ";
     document.getElementById('pName').innerText = document.getElementById('mName').value || " ";
 
+    // 現在選ばれているのが「目標」か「平均」かを判定してグラフの凡例に使う
+    const targetType = document.getElementById('targetSelect') ? document.getElementById('targetSelect').value : 'target';
+    const targetLabelName = (targetType === 'target') ? '目標' : '平均';
+
     const ctx = document.getElementById('fitnessChart').getContext('2d');
     if(myChart) myChart.destroy();
     
@@ -261,7 +274,7 @@ function updateChart() {
         data: {
             labels: items.map(item => item.chartLabel),
             datasets: [
-                { label: '目標', data: Array(items.length).fill(100), borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
+                { label: targetLabelName, data: Array(items.length).fill(100), borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
                 { label: '前回', data: scoresPrev, backgroundColor: 'transparent', borderColor: '#aaa', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#aaa', pointRadius: 3 },
                 { label: '今回', data: scoresCurr, backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', borderWidth: 4, pointBackgroundColor: '#ff007f', pointRadius: 5 }
             ]
@@ -281,7 +294,6 @@ function prepareAndPrint() {
     const canvas = document.getElementById('fitnessChart');
     const img = document.getElementById('chartImage');
     img.src = canvas.toDataURL('image/png');
-    // 描画完了を待ってから印刷画面を開く
     setTimeout(() => { window.print(); }, 400); 
 }
 
