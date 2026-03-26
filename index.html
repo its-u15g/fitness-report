@@ -29,7 +29,7 @@
             background: white; padding: 10mm 15mm;
             box-sizing: border-box; position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            overflow: hidden; /* はみ出しカット */
+            overflow: hidden;
         }
 
         .header {
@@ -45,7 +45,7 @@
         }
 
         .info-item {
-            min-width: 0; /* はみ出し防止の保険 */
+            min-width: 0;
         }
 
         .info-item label { 
@@ -53,7 +53,6 @@
             margin-bottom: 3px; border-left: 3px solid var(--its-pink); padding-left: 6px;
         }
 
-        /* ★スマホはみ出し対策：iOSのカレンダー特有の表示をリセットし幅を100%固定 */
         .info-item input { 
             border: 1px solid #ddd; padding: 8px 5px; font-size: 14px; 
             width: 100%; max-width: 100%; box-sizing: border-box; border-radius: 4px;
@@ -103,26 +102,32 @@
 
         .print-only { display: none; }
 
-        /* ★PDF2ページ目防止対策：印刷時専用の強力なレイアウト固定 */
+        /* ★PDF2ページ目防止対策：スマホでの印刷時の高さを自動調整にし、はみ出しをブロック */
         @media print {
             html, body { 
                 background: white; margin: 0 !important; padding: 0 !important; 
-                width: 210mm; height: 297mm; 
-                overflow: hidden !important; /* 絶対に2ページ目を作らせない */
+                width: 100% !important; height: auto !important; 
             }
             .a4-page { 
-                margin: 0 auto; width: 210mm; height: 296mm; 
-                box-shadow: none; padding: 10mm 15mm; 
-                page-break-after: avoid; page-break-before: avoid;
+                margin: 0 auto !important; width: 100% !important; 
+                min-height: 0 !important; /* 絶対値の高さをリセット */
+                height: auto !important; 
+                max-height: 275mm !important; /* iPhoneのヘッダー・フッター分を引いた安全な高さに固定 */
+                box-shadow: none; padding: 5mm 10mm !important; 
+                page-break-after: avoid !important; page-break-inside: avoid !important;
                 overflow: hidden !important;
             }
             .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
             #fitnessChart { display: none !important; }
-            #chartImage { display: block !important; margin: 0 auto; max-width: 90%; }
+            #chartImage { display: block !important; margin: 0 auto; max-width: 85%; } /* グラフを少し縮小してスペース確保 */
+            .footer { 
+                position: relative !important; /* 下部への固定配置をやめる */
+                bottom: auto !important; 
+                margin-top: 15px !important; 
+            }
         }
 
-        /* スマホ表示での調整：確実にはみ出さないようパディングと幅を調整 */
         @media screen and (max-width: 600px) {
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; box-sizing: border-box; overflow-x: hidden; }
             .info-grid { grid-template-columns: 1fr; gap: 10px; width: 100%; }
@@ -267,7 +272,7 @@ function prepareAndPrint() {
     const canvas = document.getElementById('fitnessChart');
     const img = document.getElementById('chartImage');
     img.src = canvas.toDataURL('image/png');
-    // 描画が完了するまで少し待ってから印刷ダイアログを開く
+    // 描画完了を待ってから印刷画面を開く
     setTimeout(() => { window.print(); }, 400); 
 }
 
@@ -288,7 +293,6 @@ function sendData() {
         results: currentResults
     };
 
-    // いただいたURLをセットしました
     const endpoint = "https://script.google.com/macros/s/AKfycbx44Zb2-Q982DQmfjkw47G_8ogzx8MYIqqEYzL7EGMcjkvdU4G-IvsrquhqFZAyjU1t/exec"; 
 
     fetch(endpoint, {
