@@ -44,12 +44,16 @@
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 12px;
         }
 
+        .info-item {
+            min-width: 0; /* はみ出し防止の保険 */
+        }
+
         .info-item label { 
             font-size: 10px; display: block; color: var(--its-navy); font-weight: bold;
             margin-bottom: 3px; border-left: 3px solid var(--its-pink); padding-left: 6px;
         }
 
-        /* ★スマホはみ出し対策：iOS特有の表示をリセットし、幅を100%に完全固定 */
+        /* ★スマホはみ出し対策：iOSのカレンダー特有の表示をリセットし幅を100%固定 */
         .info-item input { 
             border: 1px solid #ddd; padding: 8px 5px; font-size: 14px; 
             width: 100%; max-width: 100%; box-sizing: border-box; border-radius: 4px;
@@ -118,6 +122,7 @@
             #chartImage { display: block !important; margin: 0 auto; max-width: 90%; }
         }
 
+        /* スマホ表示での調整：確実にはみ出さないようパディングと幅を調整 */
         @media screen and (max-width: 600px) {
             .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; box-sizing: border-box; overflow-x: hidden; }
             .info-grid { grid-template-columns: 1fr; gap: 10px; width: 100%; }
@@ -224,4 +229,86 @@ function updateChart() {
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
-        scoresCurr.push
+        scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
+        document.getElementById('pt'+i).innerText = t;
+        document.getElementById('pp'+i).innerText = p;
+        document.getElementById('pa'+i).innerText = a;
+    });
+
+    document.getElementById('pDate').innerText = document.getElementById('mDate').value;
+    document.getElementById('pGrade').innerText = document.getElementById('mGrade').value || " ";
+    document.getElementById('pName').innerText = document.getElementById('mName').value || " ";
+
+    const ctx = document.getElementById('fitnessChart').getContext('2d');
+    if(myChart) myChart.destroy();
+    
+    myChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: items.map(item => item.chartLabel),
+            datasets: [
+                { label: '目標', data: Array(items.length).fill(100), borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
+                { label: '前回', data: scoresPrev, backgroundColor: 'transparent', borderColor: '#aaa', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#aaa', pointRadius: 3 },
+                { label: '今回', data: scoresCurr, backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', borderWidth: 4, pointBackgroundColor: '#ff007f', pointRadius: 5 }
+            ]
+        },
+        options: {
+            animation: false,
+            scales: { 
+                r: { min: 0, max: 120, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' }, angleLines: { color: 'rgba(0,0,0,0.1)' }, pointLabels: { font: { size: 10, weight: 'bold' }, color: '#001529' } } 
+            },
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } } }
+        }
+    });
+}
+
+function prepareAndPrint() {
+    updateChart();
+    const canvas = document.getElementById('fitnessChart');
+    const img = document.getElementById('chartImage');
+    img.src = canvas.toDataURL('image/png');
+    // 描画が完了するまで少し待ってから印刷ダイアログを開く
+    setTimeout(() => { window.print(); }, 400); 
+}
+
+// ----------------------------------------------------
+// スプレッドシートへデータを送信する機能
+// ----------------------------------------------------
+function sendData() {
+    const btn = document.getElementById('btn-send');
+    btn.innerText = "送信中...";
+    btn.disabled = true;
+
+    const currentResults = items.map((item, i) => document.getElementById('a'+i).value);
+
+    const data = {
+        date: document.getElementById('mDate').value,
+        grade: document.getElementById('mGrade').value,
+        name: document.getElementById('mName').value,
+        results: currentResults
+    };
+
+    // いただいたURLをセットしました
+    const endpoint = "https://script.google.com/macros/s/AKfycbx44Zb2-Q982DQmfjkw47G_8ogzx8MYIqqEYzL7EGMcjkvdU4G-IvsrquhqFZAyjU1t/exec"; 
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, 
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        alert('データをスプレッドシートに送信しました！');
+        btn.innerText = "データ送信";
+        btn.disabled = false;
+    })
+    .catch(error => {
+        alert('送信に失敗しました。電波の良いところで再度お試しください。');
+        btn.innerText = "データ送信";
+        btn.disabled = false;
+    });
+}
+
+updateChart();
+</script>
+</body>
+</html>
