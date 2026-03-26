@@ -29,7 +29,6 @@
             background: white; padding: 10mm 15mm;
             box-sizing: border-box; position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            overflow: hidden;
         }
 
         .header {
@@ -97,36 +96,26 @@
 
         .print-only { display: none; }
 
-        /* ★PDF出力時の専用レイアウト：強制的にA4(1ページ)に固定し、はみ出しをカットする */
+        /* ★PDF出力時の専用レイアウト：大きさを保ったまま2ページ目を防ぐ */
         @media print {
             html, body { 
-                background: white; 
+                background: white !important; 
                 margin: 0 !important; 
                 padding: 0 !important; 
-                width: 210mm !important; 
-                height: 297mm !important; 
-                overflow: hidden !important; 
+                width: 210mm !important; /* スマホに縮小させないためにA4幅を強制 */
+                height: auto !important; /* 高さは中身に合わせる（2ページ目を作らせない） */
             }
             .a4-page { 
                 margin: 0 !important; 
                 padding: 10mm 15mm !important; 
                 width: 210mm !important; 
-                height: 296mm !important; /* 297mmより1mmだけ短くして2ページ目発生を防止 */
+                height: auto !important; /* 絶対値の高さを解除 */
+                min-height: 0 !important;
                 box-sizing: border-box !important;
                 box-shadow: none !important; 
-                page-break-after: avoid !important; 
-                page-break-before: avoid !important;
-                overflow: hidden !important;
             }
             
-            /* 各ブロック間の隙間を少し詰めて、iPhoneのヘッダー・フッターに重ならないようにする */
-            .header { margin-bottom: 10px !important; padding-bottom: 5px !important; }
-            .info-grid { margin-bottom: 10px !important; gap: 10px !important; }
-            .chart-section { margin-bottom: 10px !important; }
-            .table-section h3 { margin: 5px 0 !important; }
-            .result-table td, .result-table th { padding: 6px !important; }
-            
-            /* グラフ画像は元の大きさ（最大）をキープ */
+            /* グラフは大きく綺麗に見せるために最大幅を指定 */
             #chartImage { 
                 display: block !important; 
                 margin: 0 auto !important; 
@@ -138,12 +127,13 @@
             .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
             
+            /* フッターの「絶対配置」をやめ、表のすぐ下に自然に置くことで下部のオーバーフローを防ぐ */
             .footer { 
-                position: absolute !important; 
-                bottom: 10mm !important; 
-                left: 15mm !important; 
-                right: 15mm !important; 
-                margin-top: 0 !important; 
+                position: relative !important; 
+                bottom: auto !important; 
+                left: auto !important; 
+                right: auto !important; 
+                margin-top: 20px !important; 
             }
         }
 
