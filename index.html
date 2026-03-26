@@ -10,10 +10,13 @@
         :root {
             --its-navy: #001529;
             --its-pink: #ff007f;
-            --its-green: #28a745; /* 送信ボタン用の緑色 */
+            --its-green: #28a745; 
         }
 
-        @page { size: A4; margin: 0; }
+        @page { 
+            size: A4 portrait; 
+            margin: 0; 
+        }
 
         body { 
             margin: 0; padding: 0; background-color: #f0f2f5; 
@@ -25,7 +28,8 @@
             width: 210mm; min-height: 296mm; margin: 20px auto;
             background: white; padding: 10mm 15mm;
             box-sizing: border-box; position: relative;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            overflow: hidden; /* はみ出しカット */
         }
 
         .header {
@@ -45,11 +49,14 @@
             margin-bottom: 3px; border-left: 3px solid var(--its-pink); padding-left: 6px;
         }
 
-        /* はみ出し防止のため、max-widthを指定し、フォントサイズを微調整 */
+        /* ★スマホはみ出し対策：iOS特有の表示をリセットし、幅を100%に完全固定 */
         .info-item input { 
             border: 1px solid #ddd; padding: 8px 5px; font-size: 14px; 
             width: 100%; max-width: 100%; box-sizing: border-box; border-radius: 4px;
             background-color: #fff;
+            margin: 0;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .chart-section { display: flex; justify-content: center; margin-bottom: 15px; }
@@ -67,6 +74,7 @@
         .result-table input { 
             width: 100%; max-width: 55px; text-align: center; border: 1px solid #ccc; 
             padding: 6px 4px; font-size: 13px; border-radius: 4px; box-sizing: border-box;
+            -webkit-appearance: none; margin: 0;
         }
 
         .footer {
@@ -91,21 +99,27 @@
 
         .print-only { display: none; }
 
+        /* ★PDF2ページ目防止対策：印刷時専用の強力なレイアウト固定 */
         @media print {
-            body { background: white; margin: 0; padding: 0; }
+            html, body { 
+                background: white; margin: 0 !important; padding: 0 !important; 
+                width: 210mm; height: 297mm; 
+                overflow: hidden !important; /* 絶対に2ページ目を作らせない */
+            }
             .a4-page { 
                 margin: 0 auto; width: 210mm; height: 296mm; 
-                box-shadow: none; padding: 10mm 15mm; page-break-after: avoid;
+                box-shadow: none; padding: 10mm 15mm; 
+                page-break-after: avoid; page-break-before: avoid;
+                overflow: hidden !important;
             }
-            .no-print-area, input { display: none !important; }
+            .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
             #fitnessChart { display: none !important; }
-            #chartImage { display: block !important; margin: 0 auto; }
+            #chartImage { display: block !important; margin: 0 auto; max-width: 90%; }
         }
 
-        /* スマホ表示での調整：確実にはみ出さないようパディング調整 */
         @media screen and (max-width: 600px) {
-            .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 10px 100px 10px; box-sizing: border-box; overflow-x: hidden; }
+            .a4-page { margin: 0; width: 100%; min-height: 100vh; padding: 15px 15px 100px 15px; box-sizing: border-box; overflow-x: hidden; }
             .info-grid { grid-template-columns: 1fr; gap: 10px; width: 100%; }
             .footer { position: static; margin-top: 20px; padding-bottom: 20px; }
         }
@@ -124,7 +138,7 @@
     <div class="info-grid">
         <div class="info-item">
             <label>測定日 DATE</label>
-            <input type="date" id="mDate" value="2026-03-23">
+            <input type="date" id="mDate" value="2026-03-26">
             <span id="pDate" class="print-only"></span>
         </div>
         <div class="info-item">
@@ -210,95 +224,4 @@ function updateChart() {
         const p = parseFloat(document.getElementById('p'+i).value) || 0;
         const a = parseFloat(document.getElementById('a'+i).value) || 0;
         scoresPrev.push(p === 0 ? 0 : (item.isTime ? (t/p*100).toFixed(1) : (p/t*100).toFixed(1)));
-        scoresCurr.push(a === 0 ? 0 : (item.isTime ? (t/a*100).toFixed(1) : (a/t*100).toFixed(1)));
-        document.getElementById('pt'+i).innerText = t;
-        document.getElementById('pp'+i).innerText = p;
-        document.getElementById('pa'+i).innerText = a;
-    });
-
-    document.getElementById('pDate').innerText = document.getElementById('mDate').value;
-    document.getElementById('pGrade').innerText = document.getElementById('mGrade').value || " ";
-    document.getElementById('pName').innerText = document.getElementById('mName').value || " ";
-
-    const ctx = document.getElementById('fitnessChart').getContext('2d');
-    if(myChart) myChart.destroy();
-    
-    myChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: items.map(item => item.chartLabel),
-            datasets: [
-                { label: '目標', data: Array(items.length).fill(100), borderColor: '#333', borderDash: [2,2], fill: false, pointRadius: 0, borderWidth: 1 },
-                { label: '前回', data: scoresPrev, backgroundColor: 'transparent', borderColor: '#aaa', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#aaa', pointRadius: 3 },
-                { label: '今回', data: scoresCurr, backgroundColor: 'rgba(255, 0, 127, 0.4)', borderColor: '#ff007f', borderWidth: 4, pointBackgroundColor: '#ff007f', pointRadius: 5 }
-            ]
-        },
-        options: {
-            animation: false,
-            scales: { 
-                r: { min: 0, max: 120, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.05)' }, angleLines: { color: 'rgba(0,0,0,0.1)' }, pointLabels: { font: { size: 10, weight: 'bold' }, color: '#001529' } } 
-            },
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } } }
-        }
-    });
-}
-
-function prepareAndPrint() {
-    updateChart();
-    const canvas = document.getElementById('fitnessChart');
-    const img = document.getElementById('chartImage');
-    img.src = canvas.toDataURL('image/png');
-    setTimeout(() => { window.print(); }, 300);
-}
-
-// ----------------------------------------------------
-// スプレッドシートへデータを送信する機能
-// ----------------------------------------------------
-function sendData() {
-    const btn = document.getElementById('btn-send');
-    btn.innerText = "送信中...";
-    btn.disabled = true;
-
-    // 入力された「今回」のデータを取得
-    const currentResults = items.map((item, i) => document.getElementById('a'+i).value);
-
-    const data = {
-        date: document.getElementById('mDate').value,
-        grade: document.getElementById('mGrade').value,
-        name: document.getElementById('mName').value,
-        results: currentResults
-    };
-
-    // ★ ここにステップ1の最後でコピーしたウェブアプリのURLを貼り付けます ★
-    const endpoint = "https://script.google.com/macros/s/AKfycbx44Zb2-Q982DQmfjkw47G_8ogzx8MYIqqEYzL7EGMcjkvdU4G-IvsrquhqFZAyjU1t/exec"; 
-
-    // エラーを防ぐため、URLが設定されていない場合はストップ
-    if (endpoint.includes("ここに先ほどコピー")) {
-        alert("Google Apps ScriptのURLが設定されていません。コードを修正してください。");
-        btn.innerText = "データ送信";
-        btn.disabled = false;
-        return;
-    }
-
-    // GASへデータを送信
-    fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // エラー回避のためtext/plainで送る
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        alert('データをスプレッドシートに送信しました！');
-        btn.innerText = "データ送信";
-        btn.disabled = false;
-    })
-    .catch(error => {
-        alert('送信に失敗しました。電波の良いところで再度お試しください。');
-        btn.innerText = "データ送信";
-        btn.disabled = false;
-    });
-}
-
-updateChart();
-</script>
-</body>
-</html>
+        scoresCurr.push
