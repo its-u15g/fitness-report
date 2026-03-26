@@ -44,9 +44,7 @@
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 12px;
         }
 
-        .info-item {
-            min-width: 0;
-        }
+        .info-item { min-width: 0; }
 
         .info-item label { 
             font-size: 10px; display: block; color: var(--its-navy); font-weight: bold;
@@ -56,10 +54,7 @@
         .info-item input { 
             border: 1px solid #ddd; padding: 8px 5px; font-size: 14px; 
             width: 100%; max-width: 100%; box-sizing: border-box; border-radius: 4px;
-            background-color: #fff;
-            margin: 0;
-            -webkit-appearance: none;
-            appearance: none;
+            background-color: #fff; margin: 0; -webkit-appearance: none; appearance: none;
         }
 
         .chart-section { display: flex; justify-content: center; margin-bottom: 15px; }
@@ -102,7 +97,7 @@
 
         .print-only { display: none; }
 
-        /* ★PDF2ページ目防止対策：スマホでの印刷時の高さを自動調整にし、はみ出しをブロック */
+        /* ★PDF出力時の専用レイアウト：隙間を詰めて文字サイズを維持する */
         @media print {
             html, body { 
                 background: white; margin: 0 !important; padding: 0 !important; 
@@ -110,21 +105,30 @@
             }
             .a4-page { 
                 margin: 0 auto !important; width: 100% !important; 
-                min-height: 0 !important; /* 絶対値の高さをリセット */
-                height: auto !important; 
-                max-height: 275mm !important; /* iPhoneのヘッダー・フッター分を引いた安全な高さに固定 */
-                box-shadow: none; padding: 5mm 10mm !important; 
+                /* 高さをA4より約3cm（30mm）短く設定し、iPhoneのヘッダー・フッター分を確保 */
+                max-height: 265mm !important; 
+                padding: 5mm 10mm !important; 
+                box-shadow: none; 
                 page-break-after: avoid !important; page-break-inside: avoid !important;
                 overflow: hidden !important;
             }
+            
+            /* 印刷時のみ、各ブロック間の隙間（マージン）をギュッと詰める */
+            .header { margin-bottom: 5px !important; padding-bottom: 5px !important; }
+            .info-grid { margin-bottom: 5px !important; gap: 8px !important; }
+            .chart-section { margin-bottom: 5px !important; }
+            .table-section h3 { margin: 5px 0 !important; }
+            
+            /* グラフ画像を少しだけ小さくして高さを稼ぐ */
+            #chartImage { display: block !important; margin: 0 auto; max-width: 280px !important; }
+            #fitnessChart { display: none !important; }
+
             .no-print-area, input, button { display: none !important; }
             .print-only { display: block !important; }
-            #fitnessChart { display: none !important; }
-            #chartImage { display: block !important; margin: 0 auto; max-width: 85%; } /* グラフを少し縮小してスペース確保 */
+            
             .footer { 
-                position: relative !important; /* 下部への固定配置をやめる */
-                bottom: auto !important; 
-                margin-top: 15px !important; 
+                position: relative !important; bottom: auto !important; 
+                margin-top: 10px !important; 
             }
         }
 
@@ -272,13 +276,9 @@ function prepareAndPrint() {
     const canvas = document.getElementById('fitnessChart');
     const img = document.getElementById('chartImage');
     img.src = canvas.toDataURL('image/png');
-    // 描画完了を待ってから印刷画面を開く
     setTimeout(() => { window.print(); }, 400); 
 }
 
-// ----------------------------------------------------
-// スプレッドシートへデータを送信する機能
-// ----------------------------------------------------
 function sendData() {
     const btn = document.getElementById('btn-send');
     btn.innerText = "送信中...";
